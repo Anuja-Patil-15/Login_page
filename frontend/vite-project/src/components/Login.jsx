@@ -2,142 +2,142 @@ import React, { useState } from "react"
 import axios from "axios"
 
 const Login = () => {
-  const [role, setRole] = useState("")
-  const [login, setLogin] = useState(false)
+  const [isRegister, setIsRegister] = useState(false)
   const [name, setName] = useState("")
-  const [password, setPassword] = useState("")
   const [email, setEmail] = useState("")
-  const [contact, setContact] = useState("")
+  const [password, setPassword] = useState("")
+  const [phone, setPhone] = useState("")
+  const [generatedPass, setGeneratedPass] = useState("")
   const [errors, setErrors] = useState({})
-  const [pass, setPass] = useState("")
 
-  const backendUrl = "http://localhost:5000"
+  const backendUrl = "http://localhost:5000/admin"
 
+  // ✅ validation
   const validate = () => {
-    const newErrors = {}
+    const err = {}
 
-    if (!role) newErrors.role = "Role is required"
-
-    if (!email) {
-      newErrors.email = "Email is required"
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = "Invalid email format"
-    }
-
-    if (login) {
-      if (!name) newErrors.name = "Name is required"
-
-      if (!contact) {
-        newErrors.contact = "Contact number is required"
-      } else if (!/^\d{10}$/.test(contact)) {
-        newErrors.contact = "Contact must be exactly 10 digits"
-      }
+    if (!email) err.email = "Email required"
+    if (isRegister) {
+      if (!name) err.name = "Name required"
+      if (!phone) err.phone = "Phone required"
+      else if (!/^\d{10}$/.test(phone)) err.phone = "Phone must be 10 digits"
     } else {
-      if (!password) newErrors.password = "Password is required"
+      if (!password) err.password = "Password required"
     }
 
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
+    setErrors(err)
+    return Object.keys(err).length === 0
   }
 
+  // ✅ submit handler
   const handleSubmit = async (e) => {
     e.preventDefault()
-
     if (!validate()) return
 
-    if (login) {
-      try {
-        const response = await axios.post(`${backendUrl}/create`, {
-          name: name,
-          phone: contact,
-          email: email,
-          role: role
+    try {
+      if (isRegister) {
+        const res = await axios.post(`${backendUrl}/create`, {
+          name,
+          phone,
+          email
         })
 
-        setPass(response.data.password)
-      } catch (error) {
-        console.log(error)
-        alert("Registration failed")
-      }
-    } else {
-      try {
+        setGeneratedPass(res.data.password)
+        alert("Admin registered successfully")
+      } else {
         await axios.post(`${backendUrl}/login`, {
-          email: email,
-          password: password,
-          role: role
+          email,
+          password
         })
 
-        alert("Login successful")
-      } catch (error) {
-        console.log(error)
-        alert("Login failed")
+        alert("Admin login successful")
       }
+    } catch (err) {
+      alert(err.response?.data?.message || "Something went wrong")
     }
   }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-200">
-      <div className="flex flex-col border-2 border-black shadow-lg bg-white rounded-lg w-[25%] p-4">
-        <div className="roles flex items-center justify-around mb-4">
-          <label>
-            <input type="radio" name="role" value="admin" onChange={(e) => setRole(e.target.value)} />
-            Admin
-          </label>
-          <label>
-            <input type="radio" name="role" value="desk" onChange={(e) => setRole(e.target.value)} />
-            Desk
-          </label>
-          <label>
-            <input type="radio" name="role" value="agent" onChange={(e) => setRole(e.target.value)} />
-            Agent
-          </label>
-        </div>
-        {errors.role && <p className="text-red-500">{errors.role}</p>}
+      <div className="bg-white p-6 rounded shadow-lg w-[350px]">
+        <h2 className="text-xl font-bold text-center mb-4">
+          {isRegister ? "Admin Registration" : "Admin Login"}
+        </h2>
 
-        <form onSubmit={handleSubmit}>
-          {login ? (
-            <div className="flex flex-col gap-2">
-              <h2 className="font-bold">Register</h2>
-
-              <input type="text" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          {isRegister && (
+            <>
+              <input
+                type="text"
+                placeholder="Name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="border p-2 rounded"
+              />
               {errors.name && <p className="text-red-500">{errors.name}</p>}
 
-              <input type="text" placeholder="Contact Number" value={contact} onChange={(e) => setContact(e.target.value)} />
-              {errors.contact && <p className="text-red-500">{errors.contact}</p>}
-
-              <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
-              {errors.email && <p className="text-red-500">{errors.email}</p>}
-
-              <button type="submit" className="bg-blue-500 text-white p-2 rounded">
-                Register
-              </button>
-
-              {pass && (
-                <div className="mt-2">
-                  <p className="font-bold">Generated Password:</p>
-                  <p className="text-green-600">{pass}</p>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2">
-              <h2 className="font-bold">Login</h2>
-
-              <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
-              {errors.email && <p className="text-red-500">{errors.email}</p>}
-
-              <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
-              {errors.password && <p className="text-red-500">{errors.password}</p>}
-
-              <button type="submit" className="bg-green-500 text-white p-2 rounded">
-                Login
-              </button>
-            </div>
+              <input
+                type="text"
+                placeholder="Phone"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="border p-2 rounded"
+              />
+              {errors.phone && <p className="text-red-500">{errors.phone}</p>}
+            </>
           )}
+
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="border p-2 rounded"
+          />
+          {errors.email && <p className="text-red-500">{errors.email}</p>}
+
+          {!isRegister && (
+            <>
+              <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="border p-2 rounded"
+              />
+              {errors.password && <p className="text-red-500">{errors.password}</p>}
+            </>
+          )}
+
+          <button
+            type="submit"
+            className={`text-white p-2 rounded ${
+              isRegister ? "bg-blue-600" : "bg-green-600"
+            }`}
+          >
+            {isRegister ? "Register Admin" : "Login"}
+          </button>
         </form>
 
-        <button className="mt-4 text-blue-600" onClick={() => setLogin(!login)}>
-          {login ? "Already have an account?" : "Create new account"}
+        {/* ✅ show generated password */}
+        {generatedPass && (
+          <div className="mt-4 bg-green-100 p-3 rounded">
+            <p className="font-bold">Generated Password:</p>
+            <p className="text-green-700">{generatedPass}</p>
+            <p className="text-sm text-red-600 mt-1">
+              Save this password. It will not be shown again.
+            </p>
+          </div>
+        )}
+
+        <button
+          className="mt-4 text-blue-600 text-sm"
+          onClick={() => {
+            setIsRegister(!isRegister)
+            setGeneratedPass("")
+          }}
+        >
+          {isRegister ? "Already have an account?" : "Create Admin Account"}
         </button>
       </div>
     </div>
