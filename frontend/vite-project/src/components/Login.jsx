@@ -1,147 +1,159 @@
 import React, { useState } from "react"
 import axios from "axios"
+import { useNavigate } from "react-router-dom"
 
 const Login = () => {
-  const [isRegister, setIsRegister] = useState(false)
-  const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [phone, setPhone] = useState("")
-  const [generatedPass, setGeneratedPass] = useState("")
-  const [errors, setErrors] = useState({})
+    const [role, setRole] = useState("")
+    const [login, setLogin] = useState(false)
+    const [name, setName] = useState("")
+    const [password, setPassword] = useState("")
+    const [email, setEmail] = useState("")
+    const [contact, setContact] = useState("")
+    const [errors, setErrors] = useState({})
+    const [pass, setPass] = useState("")
+    const navigate = useNavigate();
 
-  const backendUrl = "http://localhost:5000/admin"
+    const backendUrl = "http://localhost:5000/admin"
 
-  // ✅ validation
-  const validate = () => {
-    const err = {}
+    const validate = () => {
+        const newErrors = {}
 
-    if (!email) err.email = "Email required"
-    if (isRegister) {
-      if (!name) err.name = "Name required"
-      if (!phone) err.phone = "Phone required"
-      else if (!/^\d{10}$/.test(phone)) err.phone = "Phone must be 10 digits"
-    } else {
-      if (!password) err.password = "Password required"
+        if (!role) newErrors.role = "Role is required"
+
+        if (!email) {
+            newErrors.email = "Email is required"
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            newErrors.email = "Invalid email format"
+        }
+
+        if (login) {
+            if (!name) newErrors.name = "Name is required"
+
+            if (!contact) {
+                newErrors.contact = "Contact number is required"
+            } else if (!/^\d{10}$/.test(contact)) {
+                newErrors.contact = "Contact must be exactly 10 digits"
+            }
+        } else {
+            if (!password) newErrors.password = "Password is required"
+        }
+
+        setErrors(newErrors)
+        return Object.keys(newErrors).length === 0
     }
 
-    setErrors(err)
-    return Object.keys(err).length === 0
-  }
+    const handleSubmit = async (e) => {
+        e.preventDefault()
+        if (!validate()) return
 
-  // ✅ submit handler
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    if (!validate()) return
+        if (login) {
+            try {
+                const res = await axios.post(`${backendUrl}/create`, {
+                    name,
+                    phone: contact,
+                    email,
+                    role
+                })
+                setPass(res.data.password)
+                if (role == "Admin") navigate("/dashboard")
+            } catch (err) {
+                alert("Registration failed")
+            }
+        } else {
+            try {
+                const res = await axios.post(`${backendUrl}/login`, {
+                    email,
+                    password,
+                    role
+                })
 
-    try {
-      if (isRegister) {
-        const res = await axios.post(`${backendUrl}/create`, {
-          name,
-          phone,
-          email
-        })
+                localStorage.setItem("role", res.data.role)
 
-        setGeneratedPass(res.data.password)
-        alert("Admin registered successfully")
-      } else {
-        await axios.post(`${backendUrl}/login`, {
-          email,
-          password
-        })
+                alert("Login successful")
 
-        alert("Admin login successful")
-      }
-    } catch (err) {
-      alert(err.response?.data?.message || "Something went wrong")
+                if (res.data.role === "Admin") {
+                    navigate("/dashboard")
+                } else {
+                    navigate("/login")
+                    alert("You are not authorized to access dashboard")
+                }
+
+            } catch (err) {
+                alert("Login failed")
+            }
+
+        }
+
     }
-  }
 
-  return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-200">
-      <div className="bg-white p-6 rounded shadow-lg w-[350px]">
-        <h2 className="text-xl font-bold text-center mb-4">
-          {isRegister ? "Admin Registration" : "Admin Login"}
-        </h2>
+    const inputStyle =
+        "border border-gray-400 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-          {isRegister && (
-            <>
-              <input
-                type="text"
-                placeholder="Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="border p-2 rounded"
-              />
-              {errors.name && <p className="text-red-500">{errors.name}</p>}
+    return (
+        <div className="flex items-center justify-center min-h-screen bg-gray-200 p-2">
+            <div className="flex flex-col border-2 border-black shadow-lg bg-white rounded-lg 
+        w-[90%] sm:w-[70%] md:w-[45%] lg:w-[30%] xl:w-[25%] p-4">
 
-              <input
-                type="text"
-                placeholder="Phone"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="border p-2 rounded"
-              />
-              {errors.phone && <p className="text-red-500">{errors.phone}</p>}
-            </>
-          )}
 
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="border p-2 rounded"
-          />
-          {errors.email && <p className="text-red-500">{errors.email}</p>}
+                <div className="flex justify-around mb-4">
+                    <select
+                        value={role}
+                        onChange={(e) => setRole(e.target.value)}
+                        className="border border-gray-400 rounded px-2 py-1"
+                    >
+                        <option value="">Select Role</option>
+                        <option value="Admin">Admin</option>
+                        <option value="Desk">Desk</option>
+                        <option value="Agent">Agent</option>
+                    </select>
 
-          {!isRegister && (
-            <>
-              <input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="border p-2 rounded"
-              />
-              {errors.password && <p className="text-red-500">{errors.password}</p>}
-            </>
-          )}
+                </div>
+                {errors.role && <p className="text-red-500 text-sm">{errors.role}</p>}
 
-          <button
-            type="submit"
-            className={`text-white p-2 rounded ${
-              isRegister ? "bg-blue-600" : "bg-green-600"
-            }`}
-          >
-            {isRegister ? "Register Admin" : "Login"}
-          </button>
-        </form>
+                <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+                    {login ? (
+                        <>
+                            <h2 className="font-bold text-center">Register</h2>
 
-        {/* ✅ show generated password */}
-        {generatedPass && (
-          <div className="mt-4 bg-green-100 p-3 rounded">
-            <p className="font-bold">Generated Password:</p>
-            <p className="text-green-700">{generatedPass}</p>
-            <p className="text-sm text-red-600 mt-1">
-              Save this password. It will not be shown again.
-            </p>
-          </div>
-        )}
+                            <input className={inputStyle} placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
+                            {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
 
-        <button
-          className="mt-4 text-blue-600 text-sm"
-          onClick={() => {
-            setIsRegister(!isRegister)
-            setGeneratedPass("")
-          }}
-        >
-          {isRegister ? "Already have an account?" : "Create Admin Account"}
-        </button>
-      </div>
-    </div>
-  )
+                            <input className={inputStyle} placeholder="Contact Number" value={contact} onChange={(e) => setContact(e.target.value)} />
+                            {errors.contact && <p className="text-red-500 text-sm">{errors.contact}</p>}
+
+                            <input className={inputStyle} placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                            {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
+
+                            <button className="bg-blue-500 text-white py-2 rounded">Register</button>
+
+                            {pass && (
+                                <div className="mt-2 text-center">
+                                    <p className="font-bold">Generated Password</p>
+                                    <p className="text-green-600">{pass}</p>
+                                </div>
+                            )}
+                        </>
+                    ) : (
+                        <>
+                            <h2 className="font-bold text-center">Login</h2>
+
+                            <input className={inputStyle} placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                            {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
+
+                            <input className={inputStyle} type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
+                            {errors.password && <p className="text-red-500 text-sm">{errors.password}</p>}
+
+                            <button className="bg-green-500 text-white py-2 rounded">Login</button>
+                        </>
+                    )}
+                </form>
+
+                <button className="mt-4 text-blue-600 text-sm" onClick={() => setLogin(!login)}>
+                    {login ? "Already have an account?" : "Create new account"}
+                </button>
+            </div>
+        </div>
+    )
 }
 
 export default Login
