@@ -47,19 +47,23 @@ const Login = () => {
         if (!validate()) return
 
         if (login) {
-            try {
-                const res = await axios.post(`${backendUrl}/create`, {
-                    name,
-                    phone: contact,
-                    email,
-                    role
-                })
-                setPass(res.data.password)
-                if (role == "Admin") navigate("/dashboard")
-            } catch (err) {
-                alert("Registration failed")
-            }
-        } else {
+  try {
+    const res = await axios.post(`${backendUrl}/create`, {
+      role,
+      name,
+      phone: contact,
+      email, 
+    })
+
+    setPass(res.data.password)
+    alert("Registration successful. Save the password.")
+
+  } catch (err) {
+    alert("Registration failed")
+  }
+}
+
+        else {
             try {
                 const res = await axios.post(`${backendUrl}/login`, {
                     email,

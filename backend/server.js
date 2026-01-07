@@ -1,10 +1,14 @@
 const express=require('express');
-const db=require('./db');
+const db=require('./Database/db');
 const cors = require('cors');
-const route=require('./routes');
+const route=require('./Routes/routes');
+const { userList } = require('./Controller/adminController');
 const app=express();
 app.use(cors());
+
+
 app.use(express.json());
+
 
 
 
